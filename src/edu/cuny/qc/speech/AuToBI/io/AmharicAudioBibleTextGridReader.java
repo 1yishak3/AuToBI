@@ -42,7 +42,7 @@ import java.io.*;
  * The names of orthogonal, tones and breaks tiers in the TextGrid can be specified or standard "words", "tones",
  * "breaks" can be used.
  */
-public class AmharicAudioBibleTextGridReader extends TextGridReader extends {
+public class AmharicAudioBibleTextGridReader extends TextGridReader {
 
     protected String filename;          // the name of the textgrid file
     protected String charsetName;  // the name of the character set of the file to read.
@@ -61,6 +61,7 @@ public class AmharicAudioBibleTextGridReader extends TextGridReader extends {
      * @param filename the filename to read
      */
     public AmharicAudioBibleTextGridReader(String filename) {
+    	super(filename);
         this.filename = filename;
     }
 
@@ -70,10 +71,7 @@ public class AmharicAudioBibleTextGridReader extends TextGridReader extends {
      * @param filename    the filename to read
      * @param charsetName the name of the character set for the input
      */
-    public AmharicAudioBibleTextGridReader(String filename, String charsetName) {
-        this.filename = filename;
-        this.charsetName = charsetName;
-    }
+    
 
     /**
      * Constructs a new TextGridReader with specified file and tier names.
@@ -84,7 +82,8 @@ public class AmharicAudioBibleTextGridReader extends TextGridReader extends {
      * @param breaks_tier_name the name of the breaks tier
      */
     public AmharicAudioBibleTextGridReader(String filename, String words_tier_name, String phones_tier_name, String breaks_tier_name) {
-        this.filename = filename;
+    	super(filename, null, null, breaks_tier_name);
+    	this.filename = filename;
         this.words_tier_name = words_tier_name;
         this.phones_tier_name = phones_tier_name;
         this.breaks_tier_name = breaks_tier_name;
@@ -101,6 +100,7 @@ public class AmharicAudioBibleTextGridReader extends TextGridReader extends {
      */
     public AmharicAudioBibleTextGridReader(String filename, String words_tier_name, String phones_tier_name, String breaks_tier_name,
                           String charsetName) {
+    	super(filename, null, null, breaks_tier_name, charsetName);
         this.filename = filename;
         this.words_tier_name = words_tier_name;
         this.phones_tier_name = phones_tier_name;
@@ -198,43 +198,64 @@ public class AmharicAudioBibleTextGridReader extends TextGridReader extends {
             ToBIUtils.generateDefaultTonesFromBreaks(words);
         }
 
+        //List<Word> words = generateWordList(words_tier.getRegions());
+
+        copyToBIBreaksByTime(words, breaks_tier.getRegions());
         return words;
     }
 
 
+
+
     /**
-     * Converts the list of regions held in a Tier to a list of words.
+     * Copies a list of breaks to associated words. Adapted from function of same name in AlignmentUtils.java.
      * <p/>
-     * Omits silent regions when creating the list of words.
+     * Requires that the breaks and words sorted by time. If a word does not have a break within its boundaries, it is
+     * assumed to be a break index of '1'.
      * <p/>
-     * Note: words can hold ToBI annotations, while regions are more general objects.
+     * Note: This should only be used where there is a strong trust that the annotation is correctly aligned with
+     * segmental annotations.
      *
-     * @param regions the regions to convert
-     * @return a list of words
+     * @param words  The list of words
+     * @param breaks The list of breaks
      */
-    protected List<Word> generateWordList(List<Region> regions) {
-        List<Word> words = new ArrayList<Word>();
-        for (Region r : regions) {
-            if (!WordReaderUtils.isSilentRegion(r.getLabel(), silence_regex)) {
-                Word w = new Word(r.getStart(), r.getEnd(), r.getLabel(), null, r.getFile());
-                w.setAttribute("speaker_id", filename.replaceFirst("^.*/", "").subSequence(0, 2));
-                words.add(w);
+    public static void copyToBIBreaksByTime(List<Word> words, List<Region> breaks) {
+        int break_idx = 0;
+        int word_idx = 0;
+        String previous_break = "na";
+        while (break_idx < breaks.size() && word_idx < words.size()) {
+
+            Region b = breaks.get(break_idx);
+            Word word = words.get(word_idx);
+            if (b.getStart() <= word.getStart()) { // consider a break as a point, only look at start time
+                break_idx++;
+            } else if (b.getStart() > word.getEnd() ) {
+                if (word.getBreakAfter() == null) {
+                    word.setBreakBefore(previous_break);
+                    word.setBreakAfter("4");
+                    previous_break = "4";
+                }
+                word_idx++;
+            } else {
+                // Assign break to word
+                word.setBreakBefore(previous_break);
+                String current_break = "4";
+                word.setBreakAfter(current_break);
+                // word.setPhraseAccent("X-?");
+                // word.setBoundaryTone("X%?");
+                previous_break = current_break;
+
+                break_idx++;
+                word_idx++;
             }
         }
-        return words;
-    }
 
-
-    /**
-     * Generates a TextGridTier from the supplied AuToBIFileReader.
-     *
-     * @param reader The AuToBIFileReader
-     * @return the Tier
-     * @throws IOException if there is no tier to be read or if there is a problem with the reader
-     */
-    public Tier readTextGridTier(AuToBIFileReader reader) throws IOException, TextGridSyntaxErrorException {
-        TextGridTier tier = new TextGridTier();
-        tier.readTier(reader);
-        return tier;
+        while (word_idx < words.size()) {
+            String current_break = "na";
+            words.get(word_idx).setBreakBefore(previous_break);
+            words.get(word_idx).setBreakAfter(current_break);
+            previous_break = current_break;
+            word_idx++;
+        }
     }
 }

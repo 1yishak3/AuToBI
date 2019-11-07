@@ -1,0 +1,12 @@
+/ContourPolyFitFeatureExtractor.class
+/ContourPolynomialFitter.class
+/ContourQuantizer.class
+/ContourQuantizerException.class
+/CurveShape.class
+/CurveShapeFeatureExtractor$Block.class
+/CurveShapeFeatureExtractor.class
+/CurveShapeLikelihoodFeatureExtractor.class
+/PVALFeatureExtractor.class
+/QCMFeatureExtractor.class
+/QuantizedContourModel.class
+/QuantizedContourModelTrainer.class

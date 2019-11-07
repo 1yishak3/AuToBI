@@ -126,6 +126,12 @@ public class WordReaderUtils {
           return null;
         }
         break;
+      case AUDIOBIBLE:
+        reader = new AmharicAudioBibleTextGridReader(filename,
+                params.getOptionalParameter("words_tier_name"),
+                params.getOptionalParameter("phones_tier_name"),
+                params.getOptionalParameter("breaks_tier_name"));
+        break;
       default:
         reader = new TextGridReader(filename);
     }

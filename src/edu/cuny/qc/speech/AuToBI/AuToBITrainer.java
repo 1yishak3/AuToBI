@@ -109,9 +109,13 @@ public class AuToBITrainer {
           filenames = AuToBIReaderUtils.globFormattedFiles(autobi.getParameter("rhapsodie_filenames"),
               FormattedFile.Format.RHAPSODIE);
         } catch (AuToBIException e2) {
-          AuToBIUtils
-              .error("No training files specified with -training_filenames, -cprom_filenames or -rhapsodie_filenames");
-          return;
+          try{
+            filenames = AuToBIReaderUtils.globFormattedFiles(autobi.getParameter("audiobible_filenames"), FormattedFile.Format.AUDIOBIBLE);
+          }catch(AuToBIException e3) {
+            AuToBIUtils
+                    .error("No training files specified with -training_filenames, -cprom_filenames or -rhapsodie_filenames");
+            return;
+          }
         }
       }
     }

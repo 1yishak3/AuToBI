@@ -924,7 +924,7 @@ public class AuToBI {
           w.getAttribute(tasks.get("intonational_phrase_boundary_detection").getHypFeature())
               .equals("INTONATIONAL_BOUNDARY")) {
         b_label = "4";
-      } else if (getTasks().containsKey("intonational_phrase_boundary_detection") &&
+      } else if (getTasks().containsKey("intermediate_phrase_boundary_detection") &&
           w.hasAttribute(tasks.get("intermediate_phrase_boundary_detection").getHypFeature()) &&
           w.getAttribute(tasks.get("intermediate_phrase_boundary_detection").getHypFeature())
               .equals("INTERMEDIATE_BOUNDARY")) {
@@ -1451,9 +1451,13 @@ public class AuToBI {
         // the user needs to specify rhapsodie files explicitly
         file = new FormattedFile(getOptionalParameter("rhapsodie_file"), FormattedFile.Format.RHAPSODIE);
         word_reader = WordReaderUtils.getAppropriateReader(file, getParameters());
+      } else if (hasParameter("audiobible_file")) {
+        file = new FormattedFile(getOptionalParameter("audiobible_file"), FormattedFile.Format.AUDIOBIBLE);
+        filename = getOptionalParameter("audiobible_file");
+        word_reader = WordReaderUtils.getAppropriateReader(file, getParameters());
       } else {
         AuToBIUtils.info(
-            "No -input_file or -cprom_file filename specified.  Generating segmentation based on acoustic " +
+            "No -input_file or -{cprom, rhapsodie, audiobible}_file filename specified.  Generating segmentation based on acoustic " +
                 "pseudosyllabification.");
         wav.setFilename(wav_filename);
         if (hasParameter("silence_threshold")) {
